@@ -26,3 +26,21 @@ module.exports = {
 ```
 
 ---
+
+## 1. The MovieDB API
+
+- **The MovieDB Website API_KEY 받기**
+  - [TMDB](https://www.themoviedb.org/)
+  - `Profile` -> `Settings` -> `API` -> `Request an API Key` -> `Developer` -> `API Key (v3 auth)`
+  - 동일한 부분
+    - `API_URL` : `https://api.themoviedb.org/3/`
+  - 이미지는 어떻게 가져오나?
+    - 동일한 UR 부분 : `https://image.tmdb.org/t/p`
+    - 이미지 사이즈 : `/original`
+    - 유니크한 이름 이미지 이름 : `/wwwemzK...svg`
+
+```js
+// components/Config.js
+export const API_URL = 'https://api.themoviedb.org/3/'
+export const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p'
+```
