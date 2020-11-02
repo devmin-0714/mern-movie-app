@@ -636,12 +636,12 @@ router.post('/favoriteNumber', (req, res) => {
 
 router.post('/favorited', (req, res) => {
 
-    // 내가 이 영화를  Favorite 리스트에 넣었는지   정보를  DB 에서 가져오기
+    // 내가 이 영화를 Favorite 리스트에 넣었는지 정보를 DB 에서 가져오기
     Favorite.find({ "movieId": req.body.movieId, "userFrom": req.body.userFrom })
         .exec((err, info) => {
             if (err) return res.status(400).send(err)
 
-            // 그다음에   프론트에  다시   숫자 정보를 보내주기
+            // 그다음에 프론트에 다시 숫자 정보를 보내주기
             let result = false;
             if (info.length !== 0) {
                 result = true
@@ -652,4 +652,85 @@ router.post('/favorited', (req, res) => {
 })
 
 module.exports = router
+```
+
+## 8. Favorite 리스트에 추가 삭제
+
+- **특정 영화를 Favorite 리스트에 넣는 기능 만들기**
+- **특정 영화를 Favorite 리스트에서 빼는 기능 만들기**
+
+```js
+// MovieDetail/Sections/Favorite.js
+import { Button } from 'antd'
+
+function Favorite(props) {
+
+    ...
+    const [FavoriteNumber, setFavoriteNumber] = useState(0)
+    const [Favorited, setFavorited] = useState(false)
+
+    let variables = {
+        movieId: movieId,
+        userFrom: userFrom,
+        movieTitle: movieTitle,
+        moviePost: moviePost,
+        movieRunTime: movieRunTime
+    }
+
+    useEffect(() => {
+        ...
+    }, [])
+
+    const onClickFavorite = () => {
+
+        if (Favorited) {
+            axios.post('/api/favorite/removeFromFavorite', variables)
+                .then(response => {
+                    if (response.data.success) {
+                        setFavoriteNumber(FavoriteNumber - 1)
+                        setFavorited(!Favorited)
+                    } else {
+                        alert('Favorite 리스트에서 지우는 걸 실패했습니다.')
+                    }
+                })
+
+        } else {
+            axios.post('/api/favorite/addToFavorite', variables)
+                .then(response => {
+                    if (response.data.success) {
+                        setFavoriteNumber(FavoriteNumber + 1)
+                        setFavorited(!Favorited)
+                    } else {
+                        alert('Favorite 리스트에서 추가하는 걸 실패했습니다.')
+                    }
+                })
+        }
+    }
+
+    return (
+        <div>
+            <Button onClick={onClickFavorite}>{Favorited ? " Not Favorite" : "Add to Favorite "} {FavoriteNumber} </Button>
+        </div>
+    )
+}
+
+// server/routes/favorite.js
+router.post('/removeFromFavorite', (req, res) => {
+
+    Favorite.findOneAndDelete({ movieId: req.body.movieId, userFrom: req.body.userFrom })
+        .exec((err, doc) => {
+            if (err) return res.status(400).send(err)
+            res.status(200).json({ success: true, doc })
+        })
+})
+
+router.post('/addToFavorite', (req, res) => {
+
+    const favorite = new Favorite(req.body)
+
+    favorite.save((err, doc) => {
+        if (err) return res.status(400).send(err)
+        return res.status(200).json({ success: true })
+    })
+})
 ```
