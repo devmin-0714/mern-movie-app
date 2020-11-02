@@ -175,11 +175,9 @@ function LandingPage() {
 
               {/* Movie Grid Cards */}
               <Row gutter={[16, 16]} >
-
                   {Movies && Movies.map((movie, index) => (
                       <React.Fragment key={index}>
                           <GridCards
-                              landingPage
                               image={movie.poster_path ?
                                   `${IMAGE_BASE_URL}w500${movie.poster_path}` : null}
                               movieId={movie.id}
@@ -303,7 +301,6 @@ function MovieDetail(props) {
 
   useEffect(() => {
     let endpointInfo = `${API_URL}movie/${movieId}?api_key=${API_KEY}`
-    let endpointCrew = `${API_URL}movie/${movieId}/credits?api_key=${API_KEY}`
 
     fetch(endpointInfo)
       .then((response) => response.json())
@@ -374,4 +371,133 @@ function MovieInfo(props) {
 }
 
 export default MovieInfo
+```
+
+## 6. 영화 출연진들 가져오기
+
+- **영화에 나오는 Crews Information을 가져오기**
+- **가져온 Crew 정보를 State에 넣기**
+- **State에 보관된 Data들을 화면에 보여주기**
+
+```js
+// MovieDetail.js
+import GridCards from '../commons/GridCards'
+import { Row } from 'antd'
+
+function MovieDetail(props) {
+    ...
+    const [Casts, setCasts] = useState([])
+    const [ActorToggle, setActorToggle] = useState(false)
+
+    useEffect(() => {
+        ...
+
+        let endpointCrew = `${API_URL}movie/${movieId}/credits?api_key=${API_KEY}`
+
+        ...
+
+        fetch(endpointCrew)
+            .then(response => response.json())
+            .then(response => {
+                setCasts(response.cast)
+            })
+
+    }, [])
+
+    const toggleActorView = () => {
+        setActorToggle(!ActorToggle)
+    }
+
+    return (
+        <div>
+            ...
+
+              {/* Actors Grid*/}
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem' }}>
+                  <button onClick={toggleActorView}> Toggle Actor View </button>
+              </div>
+
+              {ActorToggle &&
+                  <Row gutter={[16, 16]} >
+                      {Casts && Casts.map((cast, index) => (
+                          <React.Fragment key={index}>
+                              <GridCards
+                                  image={cast.profile_path ?
+                                      `${IMAGE_BASE_URL}w500${cast.profile_path}` : null}
+                                  characterName={cast.name}
+                              />
+                          </React.Fragment>
+                      ))}
+                  </Row>
+              }
+
+            </div>
+
+        </div>
+    )
+}
+
+// LandingPage.js
+import React, { useEffect, useState } from 'react'
+import { API_URL, API_KEY, IMAGE_BASE_URL } from '../../Config'
+import MainImage from './Sections/MainImage'
+import GridCards from '../commons/GridCards'
+import { Row } from 'antd'
+
+function LandingPage() {
+    ...
+    return (
+
+      ...
+
+        {/* Movie Grid Cards */}
+        <Row gutter={[16, 16]} >
+
+            {Movies && Movies.map((movie, index) => (
+                <React.Fragment key={index}>
+                    <GridCards
+                        landingPage
+                        image={movie.poster_path ?
+                            `${IMAGE_BASE_URL}w500${movie.poster_path}` : null}
+                        movieId={movie.id}
+                        movieName={movie.original_title}
+                    />
+                </React.Fragment>
+            ))}
+
+        </Row>
+
+      ...
+
+    )
+}
+
+// views/commons/GridCards.js
+import React from 'react'
+import { Col } from 'antd'
+
+function GridCards(props) {
+
+    if (props.landingPage) {
+        return (
+            <Col lg={6} md={8} xs={24}>
+                <div style={{ position: 'relative' }}>
+                    <a href={`/movie/${props.movieId}`} >
+                        <img style={{ width: '100%', height: '320px' }} src={props.image} alt={props.movieName} />
+                    </a>
+                </div>
+            </Col>
+        )
+    } else {
+        return (
+            <Col lg={6} md={8} xs={24}>
+                <div style={{ position: 'relative' }}>
+                    <img style={{ width: '100%', height: '320px' }} src={props.image} alt={props.characterName} />
+                </div>
+            </Col>
+        )
+    }
+}
+
+export default GridCards
 ```

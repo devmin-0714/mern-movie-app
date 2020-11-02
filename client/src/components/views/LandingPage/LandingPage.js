@@ -69,9 +69,6 @@ function LandingPage() {
 
                 </Row>
 
-
-
-
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center' }}>
