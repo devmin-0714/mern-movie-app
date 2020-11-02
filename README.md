@@ -141,3 +141,79 @@ function MainImage(props) {
 
 export default MainImage
 ```
+
+## 3. Grid Card Component
+
+- **Grid Card Component 만들기**
+
+  - `ES7 React/Redux/GraphQL/React-Native snippets` 익스텐션 설치
+  - 한줄 ROW `24사이즈` = `4개 컬럼 x 6사이즈`
+
+```js
+// LandingPage.js
+import GridCards from '../commons/GridCards'
+import { Row } from 'antd'
+
+function LandingPage() {
+    ...
+    useEffect(() => {
+        ...
+        fetch(endpoint)
+        .then(response => response.json())
+        .then(response => {
+            console.log(response)
+            setMovies([...response.results])
+            setMainMovieImage(response.results[0])
+        })
+
+    }, [])
+
+    return (
+
+        <div style={{ width: '100%', margin: '0' }}>
+            ...
+
+              {/* Movie Grid Cards */}
+              <Row gutter={[16, 16]} >
+
+                  {Movies && Movies.map((movie, index) => (
+                      <React.Fragment key={index}>
+                          <GridCards
+                              landingPage
+                              image={movie.poster_path ?
+                                  `${IMAGE_BASE_URL}w500${movie.poster_path}` : null}
+                              movieId={movie.id}
+                              movieName={movie.original_title}
+                          />
+                      </React.Fragment>
+                  ))}
+              </Row>
+
+            </div>
+            ...
+        </div>
+    )
+}
+
+// components/views/commons/GridCard.js
+import React from 'react'
+import { Col } from 'antd'
+
+function GridCards(props) {
+
+    return (
+        <Col lg={6} md={8} xs={24}>
+            <div style={{ position: 'relative' }}>
+                <a href={`/movie/${props.movieId}`} >
+                    <img
+                    style={{ width: '100%', height: '320px' }}
+                    src={props.image}
+                    alt={props.movieName} />
+                </a>
+            </div>
+        </Col>
+    )
+}
+
+export default GridCards
+```
