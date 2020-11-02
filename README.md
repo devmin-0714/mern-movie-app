@@ -501,3 +501,155 @@ function GridCards(props) {
 
 export default GridCards
 ```
+
+## 7. Favorite 버튼 만들기
+
+- **Favorite Model 만들기**
+  - `userFrom`, `movieId`, `movieTitle`, `movieImage`, `movieRunTime`
+  - 모델 `User`의 `ObjectId`만 가지고 있으면 `User`의 모든 정보를 가져올 수 있다.
+
+```js
+// Server/models/Favorite.js
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
+
+const favoriteSchema = mongoose.Schema(
+  {
+    userFrom: {
+      // 모델 `User`의 `ObjectId`만 가지고 있으면 `User`의 모든 정보를 가져올 수 있다.
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    movieId: {
+      type: String,
+    },
+    movieTitle: {
+      type: String,
+    },
+    moviePost: {
+      type: String,
+    },
+    movieRunTime: {
+      type: String,
+    },
+  },
+  { timestamps: true }
+)
+
+const Favorite = mongoose.model('Favorite', favoriteSchema)
+
+module.exports = { Favorite }
+```
+
+- **Favorite Button UI 만들기**
+- **얼마나 많은 사람이 이 영화를 Favorite리스트에 넣었는지 그 숫자 정보 얻기**
+- **내가 이 영화를 이미 Favorite리스트에 넣었는지 아닌지 정보 얻기**
+- **데이터를 화면에 보여주기**
+  - `프론트` --`req.body`-> `서버` : `body-parser` 이용
+  - `프론트` <-`response.data`-- `서버`
+
+```js
+// MovieDetail.js
+import Favorite from '../MovieDetail/Sections/Favorite'
+
+function MovieDetail(props) {
+
+  return (
+      {/* Body */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+         <Favorite movieInfo={Movie} movieId={movieId} userFrom={localStorage.getItem('userId')} />
+      </div>
+  )
+}
+
+// MovieDetail/Sections/Favorite.js
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+
+function Favorite(props) {
+
+    const movieId = props.movieId
+    const userFrom = props.userFrom
+    const movieTitle = props.movieInfo.title
+    const moviePost = props.movieInfo.backdrop_path
+    const movieRunTime = props.movieInfo.runtime
+
+    const [FavoriteNumber, setFavoriteNumber] = useState(0)
+    const [Favorited, setFavorited] = useState(false)
+
+    useEffect(() => {
+
+        let variables = {
+            movieId,
+            userFrom
+        }
+
+        axios.post('/api/favorite/favoriteNumber', variables)
+            .then(response => {
+                if (response.data.success) {
+                    console.log(response)
+                    console.log(response.data)
+                    setFavoriteNumber(response.data.favoriteNumber)
+                } else {
+                    alert('숫자 정보를 가져오는데 실패 했습니다.')
+                }
+            })
+
+        axios.post('/api/favorite/favorited', variables)
+            .then(response => {
+                if (response.data.success) {
+                    setFavorited(response.data.favorited)
+                } else {
+                    alert('정보를 가져오는데 실패 했습니다.')
+                }
+            })
+
+    }, [])
+
+    return (
+        <div>
+            <button>{Favorited ? " Not Favorite" : "Add to Favorite "} {FavoriteNumber} </button>
+        </div>
+    )
+}
+
+export default Favorite
+
+// server/index.js
+app.use('/api/favorite', require('./routes/favorite'))
+
+// server/routes/favorite.js
+const express = require('express')
+const router = express.Router()
+const { Favorite } = require('../models/Favorite')
+
+router.post('/favoriteNumber', (req, res) => {
+
+    // mongoDB에서 favorite 숫자를 가져오기
+    Favorite.find({ "movieId": req.body.movieId })
+        .exec((err, info) => {
+            if (err) return res.status(400).send(err)
+            // 그다음에 프론트에 다시 숫자 정보를 보내주기
+            res.status(200).json({ success: true, favoriteNumber: info.length })
+        })
+})
+
+router.post('/favorited', (req, res) => {
+
+    // 내가 이 영화를  Favorite 리스트에 넣었는지   정보를  DB 에서 가져오기
+    Favorite.find({ "movieId": req.body.movieId, "userFrom": req.body.userFrom })
+        .exec((err, info) => {
+            if (err) return res.status(400).send(err)
+
+            // 그다음에   프론트에  다시   숫자 정보를 보내주기
+            let result = false;
+            if (info.length !== 0) {
+                result = true
+            }
+
+            res.status(200).json({ success: true, favorited: result })
+        })
+})
+
+module.exports = router
+```
