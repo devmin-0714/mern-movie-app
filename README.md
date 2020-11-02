@@ -217,3 +217,48 @@ function GridCards(props) {
 
 export default GridCards
 ```
+
+## 4. Load More Button 만들기
+
+- **Load More Function 만들기**
+
+```js
+// LandingPage.js
+function LandingPage() {
+    ...
+    const [CurrentPage, setCurrentPage] = useState(0)
+
+    useEffect(() => {
+        const endpoint = `${API_URL}movie/popular?api_key=${API_KEY}&language=en-US&page=1`;
+        fetchMovies(endpoint)
+    }, [])
+
+    const fetchMovies = (endpoint) => {
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(response => {
+                console.log(response)
+                setMovies([...Movies, ...response.results])
+                setMainMovieImage(response.results[0])
+                setCurrentPage(response.page)
+            })
+    }
+
+    const loadMoreItems = () => {
+        const endpoint = `${API_URL}movie/popular?api_key=${API_KEY}&language=en-US&page=${CurrentPage + 1}`;
+        fetchMovies(endpoint)
+    }
+
+    return (
+
+        <div style={{ width: '100%', margin: '0' }}>
+          ...
+
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <button onClick={loadMoreItems}> Load More</button>
+          </div>
+
+        </div>
+    )
+}
+```
