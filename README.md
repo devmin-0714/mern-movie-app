@@ -262,3 +262,116 @@ function LandingPage() {
     )
 }
 ```
+
+## 5. Movie Detail 페이지 만들기
+
+- **특정 영화에 해당하는 자세한 정보를 가져오기**
+  - `props.match.params.movieId`
+- **무비 APi에서 가져온 정보를 State에다가 집어 넣기**
+- **전체적 Template 간단히 만들기**
+
+```js
+// App.js
+import MovieDetail from './views/MovieDetail/MovieDetail'
+function App() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NavBar />
+      <div style={{ paddingTop: '69px', minHeight: 'calc(100vh - 80px)' }}>
+        <Switch>
+          <Route
+            exact
+            path="/movie/:movieId"
+            component={Auth(MovieDetail, null)}
+          />
+        </Switch>
+      </div>
+      <Footer />
+    </Suspense>
+  )
+}
+
+// MovieDetail.js
+import React, { useEffect, useState } from 'react'
+import { API_URL, API_KEY, IMAGE_BASE_URL } from '../../Config'
+import MainImage from '../../views/LandingPage/Sections/MainImage'
+import MovieInfo from './Sections/MovieInfo'
+
+function MovieDetail(props) {
+  let movieId = props.match.params.movieId
+  const [Movie, setMovie] = useState([])
+
+  useEffect(() => {
+    let endpointInfo = `${API_URL}movie/${movieId}?api_key=${API_KEY}`
+    let endpointCrew = `${API_URL}movie/${movieId}/credits?api_key=${API_KEY}`
+
+    fetch(endpointInfo)
+      .then((response) => response.json())
+      .then((response) => {
+        console.log(response)
+        setMovie(response)
+      })
+  }, [])
+
+  return (
+    <div>
+      {/* Header */}
+      <MainImage
+        image={`${IMAGE_BASE_URL}w1280${Movie.backdrop_path}`}
+        title={Movie.original_title}
+        text={Movie.overview}
+      />
+
+      {/* Body */}
+      <div style={{ width: '85%', margin: '1rem auto' }}>
+        {/* Movie Info */}
+        <MovieInfo movie={Movie} />
+
+        <br />
+
+        {/* Actors Grid*/}
+        <div
+          style={{ display: 'flex', justifyContent: 'center', margin: '2rem' }}
+        >
+          <button> Toggle Actor View </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default MovieDetail
+
+// MovieDetail/Sections/MovieInfo.js
+import React from 'react'
+import { Descriptions, Badge } from 'antd'
+
+function MovieInfo(props) {
+  let { movie } = props
+
+  return (
+    <Descriptions title="Movie Info" bordered>
+      <Descriptions.Item label="Title">
+        {movie.original_title}
+      </Descriptions.Item>
+      <Descriptions.Item label="release_date">
+        {movie.release_date}
+      </Descriptions.Item>
+      <Descriptions.Item label="revenue">{movie.revenue}</Descriptions.Item>
+      <Descriptions.Item label="runtime">{movie.runtime}</Descriptions.Item>
+      <Descriptions.Item label="vote_average" span={2}>
+        {movie.vote_average}
+      </Descriptions.Item>
+      <Descriptions.Item label="vote_count">
+        {movie.vote_count}
+      </Descriptions.Item>
+      <Descriptions.Item label="status">{movie.status}</Descriptions.Item>
+      <Descriptions.Item label="popularity">
+        {movie.popularity}
+      </Descriptions.Item>
+    </Descriptions>
+  )
+}
+
+export default MovieInfo
+```
