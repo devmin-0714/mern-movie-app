@@ -734,3 +734,181 @@ router.post('/addToFavorite', (req, res) => {
     })
 })
 ```
+
+## 9. Favorite 페이지 만들기
+
+- **Favorite 페이지를 위한 Template를 간단히 만들기**
+- **MongoDB에서 Favorite으로 된 영화 정보들을 가져오기**
+- **가져온 데이터들을 화면에서 보여주기**
+- **Remove 기능 만들기**
+
+```js
+// App.js
+import FavoritePage from './views/FavoritePage/FavoritePage'
+
+function App() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NavBar />
+      <div style={{ paddingTop: '69px', minHeight: 'calc(100vh - 80px)' }}>
+        <Switch>
+          <Route exact path="/favorite" component={Auth(FavoritePage, true)} />
+        </Switch>
+      </div>
+      <Footer />
+    </Suspense>
+  )
+}
+
+// NavBar/Sections/LeftMenu.js
+import React from 'react'
+import { Menu } from 'antd'
+
+function LeftMenu(props) {
+  return (
+    <Menu mode={props.mode}>
+      <Menu.Item key="mail">
+        <a href="/">Home</a>
+      </Menu.Item>
+
+      <Menu.Item key="favorite">
+        <a href="/favorite">Favorite</a>
+      </Menu.Item>
+    </Menu>
+  )
+}
+
+export default LeftMenu
+
+// FavoritePage.js
+import React, { useEffect, useState } from 'react'
+import './favorite.css'
+import axios from 'axios'
+import { Popover } from 'antd'
+import { IMAGE_BASE_URL } from '../../Config'
+
+function FavoritePage() {
+  const [Favorites, setFavorites] = useState([])
+
+  useEffect(() => {
+    fetchFavoredMovie()
+  }, [])
+
+  const fetchFavoredMovie = () => {
+    axios
+      .post('/api/favorite/getFavoredMovie', {
+        userFrom: localStorage.getItem('userId'),
+      })
+      .then((response) => {
+        if (response.data.success) {
+          setFavorites(response.data.favorites)
+        } else {
+          alert('영화 정보를 가져오는데 실패 했습니다.')
+        }
+      })
+  }
+
+  const onClickDelete = (movieId, userFrom) => {
+    const variables = {
+      movieId,
+      userFrom,
+    }
+
+    axios
+      .post('/api/favorite/removeFromFavorite', variables)
+      .then((response) => {
+        if (response.data.success) {
+          fetchFavoredMovie()
+        } else {
+          alert('리스트에서 지우는데 실패했습니다.')
+        }
+      })
+  }
+
+  const renderCards = Favorites.map((favorite, index) => {
+    const content = (
+      <div>
+        {favorite.moviePost ? (
+          <img src={`${IMAGE_BASE_URL}w500${favorite.moviePost}`} />
+        ) : (
+          'no image'
+        )}
+      </div>
+    )
+
+    return (
+      <tr key={index}>
+        <Popover content={content} title={`${favorite.movieTitle}`}>
+          <td>{favorite.movieTitle}</td>
+        </Popover>
+
+        <td>{favorite.movieRunTime} mins</td>
+        <td>
+          <button
+            onClick={() => onClickDelete(favorite.movieId, favorite.userFrom)}
+          >
+            Remove
+          </button>
+        </td>
+      </tr>
+    )
+  })
+
+  return (
+    <div style={{ width: '85%', margin: '3rem auto' }}>
+      <h2> Favorite Movies </h2>
+      <hr />
+
+      <table>
+        <thead>
+          <tr>
+            <th>Movie Title</th>
+            <th>Movie RunTime</th>
+            <td>Remove from favorites</td>
+          </tr>
+        </thead>
+        <tbody>{renderCards}</tbody>
+      </table>
+    </div>
+  )
+}
+
+export default FavoritePage
+
+// favorite.css
+table {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td,
+th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+// server/routes/favorite.js
+router.post('/getFavoredMovie', (req, res) => {
+
+    Favorite.find({ 'userFrom': req.body.userFrom })
+        .exec((err, favorites) => {
+            if (err) return res.status(400).send(err)
+            return res.status(200).json({ success: true, favorites })
+        })
+})
+
+router.post('/removeFromFavorite', (req, res) => {
+
+    Favorite.findOneAndDelete({ movieId: req.body.movieId, userFrom: req.body.userFrom })
+        .exec((err, result) => {
+            if (err) return res.status(400).send(err)
+            return res.status(200).json({ success: true })
+        })
+})
+```
